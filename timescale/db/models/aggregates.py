@@ -5,7 +5,7 @@ from django.db.models.fields import FloatField
 
 class Histogram(models.Aggregate):
     """
-    Implementation of the histogram function from Timescale. 
+    Implementation of the histogram function from Timescale.
 
     Read more about it here - https://docs.timescale.com/latest/using-timescaledb/reading-data#histogram
 
@@ -14,8 +14,9 @@ class Histogram(models.Aggregate):
     <TimescaleQuerySet [{'histogram': [0, 0, 0, 87, 93, 125, 99, 59, 0, 0, 0, 0], 'device__count': 463}]>
 
     """
-    function = 'histogram'
-    name = 'histogram'
+
+    function = "histogram"
+    name = "histogram"
     output_field = ArrayField(models.FloatField())
 
     def __init__(self, expression, min_value, max_value, bucket):
@@ -23,8 +24,8 @@ class Histogram(models.Aggregate):
 
 
 class Last(models.Aggregate):
-    function = 'last'
-    name = 'last'
+    function = "last"
+    name = "last"
     output_field = FloatField()
 
     def __init__(self, expression, bucket):
@@ -32,8 +33,8 @@ class Last(models.Aggregate):
 
 
 class First(models.Aggregate):
-    function = 'first'
-    name = 'first'
+    function = "first"
+    name = "first"
     output_field = FloatField()
 
     def __init__(self, expression, bucket):

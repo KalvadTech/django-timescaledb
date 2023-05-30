@@ -5,26 +5,35 @@ import timescale.db.models.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('metrics', '0002_auto_20201221_2052'),
+        ("metrics", "0002_auto_20201221_2052"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='SampleTest',
+            name="SampleTest",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('time', timescale.db.models.fields.TimescaleDateTimeField(interval='1 day')),
-                ('value', models.FloatField(default=0.0)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "time",
+                    timescale.db.models.fields.TimescaleDateTimeField(interval="1 day"),
+                ),
+                ("value", models.FloatField(default=0.0)),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.AlterModelManagers(
-            name='metric',
-            managers=[
-            ],
+            name="metric",
+            managers=[],
         ),
     ]

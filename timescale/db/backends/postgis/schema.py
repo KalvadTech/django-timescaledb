@@ -4,31 +4,27 @@ from timescale.db.models.fields import TimescaleDateTimeField
 
 
 class TimescaleSchemaEditor(PostGISSchemaEditor):
-    sql_is_hypertable = '''SELECT * FROM timescaledb_information.hypertables 
-    WHERE hypertable_name = {table}{extra_condition}'''
+    sql_is_hypertable = """SELECT * FROM timescaledb_information.hypertables 
+    WHERE hypertable_name = {table}{extra_condition}"""
 
     sql_assert_is_hypertable = (
-            'DO $do$ BEGIN '
-            'IF EXISTS ( '
-            + sql_is_hypertable +
-            ') '
-            'THEN NULL; '
-            'ELSE RAISE EXCEPTION {error_message}; '
-            'END IF;'
-            'END; $do$'
+        "DO $do$ BEGIN "
+        "IF EXISTS ( " + sql_is_hypertable + ") "
+        "THEN NULL; "
+        "ELSE RAISE EXCEPTION {error_message}; "
+        "END IF;"
+        "END; $do$"
     )
     sql_assert_is_not_hypertable = (
-            'DO $do$ BEGIN '
-            'IF EXISTS ( '
-            + sql_is_hypertable +
-            ') '
-            'THEN RAISE EXCEPTION {error_message}; '
-            'ELSE NULL; '
-            'END IF;'
-            'END; $do$'
+        "DO $do$ BEGIN "
+        "IF EXISTS ( " + sql_is_hypertable + ") "
+        "THEN RAISE EXCEPTION {error_message}; "
+        "ELSE NULL; "
+        "END IF;"
+        "END; $do$"
     )
 
-    sql_drop_primary_key = 'ALTER TABLE {table} DROP CONSTRAINT {pkey}'
+    sql_drop_primary_key = "ALTER TABLE {table} DROP CONSTRAINT {pkey}"
 
     sql_add_hypertable = (
         "SELECT create_hypertable("
@@ -37,21 +33,26 @@ class TimescaleSchemaEditor(PostGISSchemaEditor):
         "migrate_data => {migrate})"
     )
 
-    sql_set_chunk_time_interval = 'SELECT set_chunk_time_interval({table}, interval {interval})'
+    sql_set_chunk_time_interval = (
+        "SELECT set_chunk_time_interval({table}, interval {interval})"
+    )
 
-    sql_hypertable_is_in_schema = '''hypertable_schema = {schema_name}'''
+    sql_hypertable_is_in_schema = """hypertable_schema = {schema_name}"""
 
     def _assert_is_hypertable(self, model):
         """
         Assert if the table is a hyper table
         """
         table = self.quote_value(model._meta.db_table)
-        error_message = self.quote_value("assert failed - " + table + " should be a hyper table")
+        error_message = self.quote_value(
+            "assert failed - " + table + " should be a hyper table"
+        )
 
         extra_condition = self._get_extra_condition()
 
-        sql = self.sql_assert_is_hypertable.format(table=table, error_message=error_message,
-                                                   extra_condition=extra_condition)
+        sql = self.sql_assert_is_hypertable.format(
+            table=table, error_message=error_message, extra_condition=extra_condition
+        )
 
         self.execute(sql)
 
@@ -60,12 +61,15 @@ class TimescaleSchemaEditor(PostGISSchemaEditor):
         Assert if the table is not a hyper table
         """
         table = self.quote_value(model._meta.db_table)
-        error_message = self.quote_value("assert failed - " + table + " should not be a hyper table")
+        error_message = self.quote_value(
+            "assert failed - " + table + " should not be a hyper table"
+        )
 
         extra_condition = self._get_extra_condition()
 
-        sql = self.sql_assert_is_not_hypertable.format(table=table, error_message=error_message,
-                                                       extra_condition=extra_condition)
+        sql = self.sql_assert_is_not_hypertable.format(
+            table=table, error_message=error_message, extra_condition=extra_condition
+        )
 
         self.execute(sql)
 
@@ -77,7 +81,7 @@ class TimescaleSchemaEditor(PostGISSchemaEditor):
         """
         db_table = model._meta.db_table
         table = self.quote_name(db_table)
-        pkey = self.quote_name(f'{db_table}_pkey')
+        pkey = self.quote_name(f"{db_table}_pkey")
 
         sql = self.sql_drop_primary_key.format(table=table, pkey=pkey)
 
@@ -98,12 +102,17 @@ class TimescaleSchemaEditor(PostGISSchemaEditor):
         table = self.quote_value(model._meta.db_table)
         migrate = "true" if should_migrate else "false"
 
-        if should_migrate and getattr(settings, "TIMESCALE_MIGRATE_HYPERTABLE_WITH_FRESH_TABLE", False):
+        if should_migrate and getattr(
+            settings, "TIMESCALE_MIGRATE_HYPERTABLE_WITH_FRESH_TABLE", False
+        ):
             # TODO migrate with fresh table [https://github.com/schlunsen/django-timescaledb/issues/16]
             raise NotImplementedError()
         else:
             sql = self.sql_add_hypertable.format(
-                table=table, partition_column=partition_column, interval=interval, migrate=migrate
+                table=table,
+                partition_column=partition_column,
+                interval=interval,
+                migrate=migrate,
             )
             self.execute(sql)
 
@@ -142,22 +151,29 @@ class TimescaleSchemaEditor(PostGISSchemaEditor):
         super().alter_field(model, old_field, new_field, strict)
 
         #  check if old_field is not type `TimescaleDateTimeField` and new_field is
-        if not isinstance(old_field, TimescaleDateTimeField) and isinstance(new_field, TimescaleDateTimeField):
+        if not isinstance(old_field, TimescaleDateTimeField) and isinstance(
+            new_field, TimescaleDateTimeField
+        ):
             # migrate existing table to hypertable
             self._create_hypertable(model, new_field, True)
         # check if old_field and new_field is type `TimescaleDateTimeField` and `interval` is changed
-        elif isinstance(old_field, TimescaleDateTimeField) and isinstance(new_field, TimescaleDateTimeField) \
-                and old_field.interval != new_field.interval:
+        elif (
+            isinstance(old_field, TimescaleDateTimeField)
+            and isinstance(new_field, TimescaleDateTimeField)
+            and old_field.interval != new_field.interval
+        ):
             # change chunk-size
             self._set_chunk_time_interval(model, new_field)
 
     def _get_extra_condition(self):
-        extra_condition = ''
+        extra_condition = ""
 
         try:
             if self.connection.schema_name:
                 schema_name = self.quote_value(self.connection.schema_name)
-                extra_condition = ' AND ' + self.sql_hypertable_is_in_schema.format(schema_name=schema_name)
+                extra_condition = " AND " + self.sql_hypertable_is_in_schema.format(
+                    schema_name=schema_name
+                )
         except:
             pass
 

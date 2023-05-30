@@ -5,19 +5,28 @@ import timescale.db.models.fields
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Metric',
+            name="Metric",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('time', timescale.db.models.fields.TimescaleDateTimeField(interval='1 day')),
-                ('temperature', models.FloatField(default=0.0)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "time",
+                    timescale.db.models.fields.TimescaleDateTimeField(interval="1 day"),
+                ),
+                ("temperature", models.FloatField(default=0.0)),
             ],
         ),
     ]

@@ -13,10 +13,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: Set up Python 3.7
+      - name: Set up Python 3.11
         uses: actions/setup-python@v1
         with:
-          python-version: 3.7
+          python-version: 3.11
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -27,7 +27,7 @@ jobs:
           pip install -r requirements.txt
 
           # Start timescaledb
-          docker run -d --name timescaledb -p 5433:5432 -e POSTGRES_PASSWORD=password -e POSTGRES_DB=test timescale/timescaledb:2.5.1-pg14
+          docker run -d --name timescaledb -p 5433:5432 -e POSTGRES_PASSWORD=password -e POSTGRES_DB=test timescale/timescaledb:2.11.0-pg15
 
           # Wait for db to be ready
           sleep 4

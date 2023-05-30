@@ -18,8 +18,21 @@ class TimescaleManager(models.Manager):
     def time_bucket_ng(self, field, interval):
         return self.get_queryset().time_bucket_ng(field, interval)
 
-    def time_bucket_gapfill(self, field: str, interval: str, start: datetime, end: datetime, datapoints: Optional[int] = None):
-        return self.get_queryset().time_bucket_gapfill(field, interval, start, end, datapoints)
+    def time_bucket_gapfill(
+        self,
+        field: str,
+        interval: str,
+        start: datetime,
+        end: datetime,
+        datapoints: Optional[int] = None,
+    ):
+        return self.get_queryset().time_bucket_gapfill(
+            field, interval, start, end, datapoints
+        )
 
-    def histogram(self, field: str, min_value: float, max_value: float, num_of_buckets: int = 5):
-        return self.get_queryset().histogram(field, min_value, max_value, num_of_buckets)
+    def histogram(
+        self, field: str, min_value: float, max_value: float, num_of_buckets: int = 5
+    ):
+        return self.get_queryset().histogram(
+            field, min_value, max_value, num_of_buckets
+        )

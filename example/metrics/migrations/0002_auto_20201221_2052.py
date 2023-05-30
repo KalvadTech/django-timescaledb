@@ -5,16 +5,15 @@ import django.db.models.manager
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('metrics', '0001_initial'),
+        ("metrics", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelManagers(
-            name='metric',
+            name="metric",
             managers=[
-                ('timescale', django.db.models.manager.Manager()),
+                ("timescale", django.db.models.manager.Manager()),
             ],
         ),
     ]
