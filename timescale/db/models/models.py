@@ -1,4 +1,5 @@
 from django.db import models
+
 from timescale.db.models.fields import TimescaleDateTimeField
 from timescale.db.models.managers import TimescaleManager
 

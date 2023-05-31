@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db.backends.postgresql.schema import DatabaseSchemaEditor
 
-from timescale.db.models.fields import TimescaleDateTimeField
+from timescale.db.models.fields import TimescaleDateField, TimescaleDateTimeField
 
 
 class TimescaleSchemaEditor(DatabaseSchemaEditor):
@@ -134,11 +134,24 @@ class TimescaleSchemaEditor(DatabaseSchemaEditor):
         super().create_model(model)
 
         # scan if any field is of instance `TimescaleDateTimeField`
+        instance = 0
+        time = None
         for field in model._meta.local_fields:
-            if isinstance(field, TimescaleDateTimeField):
-                # create hypertable, with the field as partition column
-                self._create_hypertable(model, field)
-                break
+            if isinstance(
+                field,
+                (TimescaleDateTimeField, TimescaleDateField),
+            ):
+                instance += 1
+                if instance > 1:
+                    raise Exception(
+                        f"Field {field.name} is an extra TimescaleField you can only have one TimescaleField"
+                    )
+                else:
+                    time = field
+
+        if time and instance == 1:
+            # create hypertable, with the field as partition column
+            self._create_hypertable(model, time)
 
     def add_field(self, model, field):
         super().add_field(model, field)
