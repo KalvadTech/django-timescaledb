@@ -2,7 +2,11 @@ from typing import Dict
 
 from django.db import models
 
-from timescale.db.models.fields import TimescaleDateField, TimescaleDateTimeField
+from timescale.db.models.fields import (
+    TimescaleDateField,
+    TimescaleDateTimeField,
+    TimescaleIntegerField,
+)
 from timescale.db.models.managers import TimescaleManager
 from timescale.db.models.models import TimescaleModel
 
@@ -23,6 +27,15 @@ class AnotherMetricFromTimeScaleModel(TimescaleModel):
 
 class MetricByDate(models.Model):
     time = TimescaleDateField(interval="1 day")
+    temperature = models.FloatField(default=0.0)
+    device = models.IntegerField(default=0)
+
+    objects = models.Manager()
+    timescale = TimescaleManager()
+
+
+class MetricByInt(models.Model):
+    time = TimescaleIntegerField(interval="1 day")
     temperature = models.FloatField(default=0.0)
     device = models.IntegerField(default=0)
 

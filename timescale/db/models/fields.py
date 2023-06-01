@@ -25,13 +25,13 @@ class TimescaleDateField(DateField):
         return name, path, args, kwargs
 
 
-# class TimescaleIntegerField(IntegerField):
-#     def __init__(self, *args, interval, **kwargs):
-#         self.interval = interval
-#         super().__init__(*args, **kwargs)
+class TimescaleIntegerField(IntegerField):
+    def __init__(self, *args, interval, **kwargs):
+        self.interval = interval
+        super().__init__(*args, **kwargs)
 
-#     def deconstruct(self):
-#         name, path, args, kwargs = super().deconstruct()
-#         kwargs["interval"] = self.interval
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        kwargs["interval"] = self.interval
 
-#         return name, path, args, kwargs
+        return name, path, args, kwargs
