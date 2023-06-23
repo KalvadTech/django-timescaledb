@@ -1,7 +1,17 @@
 from django.conf import settings
 from django.db.backends.postgresql.schema import DatabaseSchemaEditor
 
-from timescale.db.models.fields import TimescaleDateTimeField
+from timescale.db.models.fields import (
+    TimescaleDateField,
+    TimescaleDateTimeField,
+    TimescaleIntegerField,
+)
+
+timescale_field = (
+    TimescaleDateField,
+    TimescaleDateTimeField,
+    TimescaleIntegerField,
+)
 
 
 class TimescaleSchemaEditor(DatabaseSchemaEditor):
@@ -31,6 +41,13 @@ class TimescaleSchemaEditor(DatabaseSchemaEditor):
         "SELECT create_hypertable("
         "{table}, {partition_column}, "
         "chunk_time_interval => interval {interval}, "
+        "migrate_data => {migrate})"
+    )
+
+    sql_add_hypertable_int = (
+        "SELECT create_hypertable("
+        "{table}, {partition_column}, "
+        "chunk_time_interval => {interval}, "
         "migrate_data => {migrate})"
     )
 
@@ -103,13 +120,22 @@ class TimescaleSchemaEditor(DatabaseSchemaEditor):
         table = self.quote_value(model._meta.db_table)
         migrate = "true" if should_migrate else "false"
 
+        if isinstance(
+            field,
+            (TimescaleDateTimeField, TimescaleDateField),
+        ):
+            sql_query = self.sql_add_hypertable
+        else:
+            sql_query = self.sql_add_hypertable_int
+            interval = int(interval.replace("'", ""))
+
         if should_migrate and getattr(
             settings, "TIMESCALE_MIGRATE_HYPERTABLE_WITH_FRESH_TABLE", False
         ):
             # TODO migrate with fresh table [https://github.com/schlunsen/django-timescaledb/issues/16]
             raise NotImplementedError()
         else:
-            sql = self.sql_add_hypertable.format(
+            sql = sql_query.format(
                 table=table,
                 partition_column=partition_column,
                 interval=interval,
@@ -134,11 +160,11 @@ class TimescaleSchemaEditor(DatabaseSchemaEditor):
         super().create_model(model)
 
         # scan if any field is of instance `TimescaleDateTimeField`
-        for field in model._meta.local_fields:
-            if isinstance(field, TimescaleDateTimeField):
-                # create hypertable, with the field as partition column
-                self._create_hypertable(model, field)
-                break
+        time = self.field_type_check(model)
+
+        if time:
+            # create hypertable, with the field as partition column
+            self._create_hypertable(model, time)
 
     def add_field(self, model, field):
         super().add_field(model, field)
@@ -179,3 +205,22 @@ class TimescaleSchemaEditor(DatabaseSchemaEditor):
             pass
 
         return extra_condition
+
+    def field_type_check(self, model):
+        instance = 0
+        time = None
+        for field in model._meta.local_fields:
+            if isinstance(
+                field,
+                (TimescaleDateTimeField, TimescaleDateField, TimescaleIntegerField),
+            ):
+                instance += 1
+                if instance > 1:
+                    raise Exception(
+                        f"Field {field.name} is an extra TimescaleField you can only have one TimescaleField"
+                    )
+                else:
+                    time = field
+
+        if time and instance == 1:
+            return time

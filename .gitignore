@@ -7,3 +7,4 @@ django_timescaledb.egg-info/
 example/timescale
 .DS_STORE
 env/
+.vscode
